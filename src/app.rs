@@ -1,4 +1,5 @@
 use actix_web::{App, HttpServer};
+use actix_web::middleware::Logger;
 
 mod routes;
 
@@ -14,9 +15,13 @@ pub async fn run() -> std::io::Result<()> {
     let state = AppState {
         // Initialize your state here
     };
+    std::env::set_var("RUST_LOG", "info");
+    std::env::set_var("RUST_BACKTRACE", "1");
+    env_logger::init();
 
     HttpServer::new(move || {
-        App::new().configure(init_routes)
+        let logger = Logger::default();
+        App::new().configure(init_routes).wrap(logger)
 
         // Pass the state to the application
         // .service(
