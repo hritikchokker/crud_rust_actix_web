@@ -5,6 +5,7 @@ use user_route::{add_user, get_user, get_user_detail, remove_user};
 pub mod index;
 mod todo_route;
 mod user_route;
+use crate::schema;
 
 fn configure_todo_routes(cnf: &mut web::ServiceConfig) {
     cnf.service(
