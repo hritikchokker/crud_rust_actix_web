@@ -2,14 +2,10 @@
 use crate::controllers::user_controller::user_controller_fn;
 // use crate::controllers::index::controllers_func;
 // use crate::models::index::models_func;
-// use crate::routes::index::routes_func;
-// use crate::utils::index::utils_func;
+use crate::routes::{configure_app_routes};
+use crate::utils::{setup_cors_handler, setup_indentity_service};
 
-use actix_cors::Cors;
-use actix_identity::{CookieIdentityPolicy, IdentityService};
-use actix_web::{
-    http::header, middleware, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
-};
+use actix_web::{middleware, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 
 mod constants;
 mod controllers;
@@ -24,24 +20,6 @@ fn ping(_req: HttpRequest) -> impl Responder {
     HttpResponse::Ok().body("pong !!")
 }
 
-fn indentity_service(domain: &String) -> IdentityService<CookieIdentityPolicy> {
-    IdentityService::new(
-        CookieIdentityPolicy::new(utils::SECRET_KEY.as_bytes())
-            .name("auth")
-            .path("/")
-            .domain(domain.as_str())
-            .max_age_time(chrono::Duration::days(1))
-            .secure(false), // this can only be true if you have https
-    )
-}
-
-fn cors_handler(address: &String) -> Cors {
-    Cors::new()
-        .allowed_origin(&address)
-        .send_wildcard()
-        .allowed_headers(vec![header::AUTHORIZATION, header::CONTENT_TYPE])
-        .max_age(3600)
-}
 
 fn main() -> std::io::Result<()> {
     dotenv::dotenv().ok();
@@ -55,10 +33,14 @@ fn main() -> std::io::Result<()> {
             .data(pool.clone())
             // enable logger
             .wrap(middleware::Logger::default())
-            .wrap(indentity_service(&domain))
+            .wrap(setup_indentity_service(&domain))
             .data(web::JsonConfig::default().limit(4096))
-            .wrap(cors_handler(&address))
+            .wrap(setup_cors_handler(&address))
             .service(web::resource("/ping").to(ping))
+            .service(
+                web::scope("/api")
+                .configure(configure_app_routes)
+            )
     })
     .bind("0.0.0.0:8000")
     .expect("Cannot bind to 0.0.0.0:8000")
