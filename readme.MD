@@ -32,3 +32,11 @@ This is a Todo app built using Rust and the Actix framework. It provides basic f
    ```bash
    bash ./setup.sh
    ```
+
+## Serve
+   
+2. Run the project:
+
+   ```bash
+   cargo run
+   ```   
